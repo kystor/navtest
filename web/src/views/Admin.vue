@@ -57,7 +57,7 @@
       </div>
       <div class="admin-content">
         <div v-if="page==='welcome'" class="welcome-page">
-          <h2 class="welcome-title">欢迎您进入 Nav-Item 后台管理系统</h2>
+          <h2 class="welcome-title">欢迎您进入导航后台管理系统</h2>
           <div class="welcome-cards">
             <div class="welcome-card">
               <div class="welcome-icon time-icon">
@@ -635,3 +635,4 @@ function closeSider() {
 }
 
 </style> 
+
