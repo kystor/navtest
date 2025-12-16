@@ -1,27 +1,33 @@
 # -----------------------------------------------------------------------------
-# Dockerfile - 最终优化版
+# Dockerfile - 最终生产环境版
 # -----------------------------------------------------------------------------
 FROM node:20-alpine3.20 AS frontend-builder
 
 WORKDIR /app
-
 COPY web/package*.json ./
 RUN npm install
-
 COPY web/ ./
 RUN npm run build
 
 # 生产环境
 FROM node:20-alpine3.20 AS production
 
-# [修改点 1] 安装依赖
-# 增加 sed 是为了处理文本格式，git 和 bash 是为了备份脚本
+# [关键 1] 安装所有依赖：
+# - tzdata: 用于设置时区
+# - git, bash: 用于备份脚本
+# - sed: 用于修复 Windows 换行符
+# - sqlite: 用于调试数据库
 RUN apk add --no-cache \
     sqlite \
     git \
     bash \
     sed \
+    tzdata \
     && rm -rf /var/cache/apk/*
+
+# [关键 2] 设置时区为亚洲/上海 (北京时间)
+# 这会让 date 命令和日志都显示正确的时间
+ENV TZ=Asia/Shanghai
 
 WORKDIR /app
 
@@ -34,17 +40,16 @@ COPY app.js config.js db.js ./
 COPY routes/ ./routes/
 COPY --from=frontend-builder /app/dist ./web/dist
 
-# [修改点 2] 复制备份脚本和启动脚本
+# [关键 3] 复制备份脚本
 COPY backup.sh entrypoint.sh ./
 
-# [修改点 3] 关键修改：权限赋予 + 格式转换
-# sed -i 's/\r$//' ... 这行命令会把 Windows 的回车符删掉，防止脚本报错
+# [关键 4] 权限与格式修复
+# sed -i 's/\r$//' ... 去除 Windows 的回车符，防止报错
 RUN sed -i 's/\r$//' backup.sh entrypoint.sh && \
     chmod +x backup.sh entrypoint.sh
 
 ENV NODE_ENV=production
-
 EXPOSE 3000/tcp
 
-# [修改点 4] 启动入口
+# 使用 entrypoint 启动
 ENTRYPOINT ["./entrypoint.sh"]
