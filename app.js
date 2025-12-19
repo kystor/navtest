@@ -91,6 +91,7 @@ app.get('/api/config', (req, res) => {
   res.json({
     // 优先使用 config 中的配置，如果没有则回退到环境变量
     title: (config.app && config.app.title) || process.env.SITE_TITLE || '我的导航'
+    background: (config.app && config.app.background) || process.env.background || process.env.BACKGROUND || ''
   });
 });
 
@@ -106,3 +107,4 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running at http://0.0.0.0:${PORT}`);
   console.log(`Zeabur Health Check should pass now.`);
 });
+
