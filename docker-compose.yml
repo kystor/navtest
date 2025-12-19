@@ -2,7 +2,7 @@ version: '3'
 
 services:
   nav-item:
-    image: eooce/nav-item
+    build: .
     container_name: nav-item
     ports:
       - "3000:3000"
@@ -14,5 +14,6 @@ services:
     volumes:
       - ./database:/app/database  # 持久化数据库文件
     restart: unless-stopped
+
 
 
