@@ -86,6 +86,28 @@ nav-item/
 - `PORT`: 服务器端口号（默认: 3000）
 - `ADMIN_USERNAME`: 管理员用户名（默认: admin）
 - `ADMIN_PASSWORD`: 管理员密码（默认: 123456）
+- | 变量名 | 示例值 | 描述 |
+| :--- | :--- | :--- |
+| `BACKUP_REPO_URL` | `https://github.com/username/my-repo.git` | 完整的仓库克隆地址。 |
+| `GITHUB_TOKEN` | `ghp_xxxxxxxxxxxx` | **必须**。GitHub 个人访问令牌。 |
+
+**方案 B：拆分配置**
+
+| 变量名 | 示例值 | 描述 |
+| :--- | :--- | :--- |
+| `GITHUB_USER` | `kystor` | GitHub 用户名。 |
+| `GITHUB_REPO` | `nav-backup` | 仓库名称。 |
+| `GITHUB_TOKEN` | `ghp_xxxxxxxxxxxx` | **必须**。GitHub 个人访问令牌。 |
+
+### 🟢 选填项 (拥有默认值)
+
+| 变量名 | 默认值 | 描述 |
+| :--- | :--- | :--- |
+| `DB_PATH` | `/app/database/nav.db` | 需要监控的源文件**绝对路径**。 |
+| `BACKUP_INTERVAL` | `10` | 轮询检查频率 (秒)。 |
+| `GITHUB_EMAIL` | `bot@nav.backup` | Git 提交记录中的邮箱。 |
+| `GITHUB_NAME` | `NavBackupBot` | Git 提交记录中的用户名。 |
+| `SITE_TITLE` | `我的导航` | 网页名称。 |
 
 ### 数据库配置
 系统使用 SQLite 数据库，数据库文件会自动创建在项目/database/目录下，使用docker部署请挂载/app/database目录实现数据持久化
@@ -290,3 +312,4 @@ services:
       - BACKUP_REPO_URL=[https://github.com/yourname/your-repo.git](https://github.com/yourname/your-repo.git)
       - DB_PATH=/app/database/nav.db
       - GITHUB_EMAIL=my@email.com
+
