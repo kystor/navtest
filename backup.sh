@@ -1,13 +1,13 @@
 #!/bin/bash
 # -----------------------------------------------------------------------------
-# backup.sh - SQL 文本同步脚本 (安全写入版)
+# backup.sh - SQL 文本同步脚本 (安全写入 + 热重载触发版)
 # -----------------------------------------------------------------------------
 
 # ================= 配置区域 =================
 SOURCE_FILE="${DB_PATH:-/app/database/nav.db}"
 SOURCE_DIR=$(dirname "$SOURCE_FILE")
 BACKUP_DIR="/app/nav-backup-repo"
-SQL_FILE="nav_data.sql"  # 🟢 核心差异：我们同步 SQL 文件，而不是 db 文件
+SQL_FILE="nav_data.sql"  # 🟢 核心差异：同步 SQL 文本，而非二进制文件
 
 # Git 环境变量
 GITHUB_EMAIL="${GITHUB_EMAIL:-bot@nav.backup}"
@@ -81,6 +81,12 @@ restore_db_from_sql() {
         fix_permissions
         
         echo "[同步服务] 数据库还原完成 (Safe Mode)。"
+
+        # 🟢【关键新增】还原完成后，更新触发文件，通知 nodemon 重启应用
+        # 只有云端数据变更时才会运行到这里，从而触发重启
+        echo "[同步服务] 触发应用重载..."
+        touch /app/.restart_trigger
+
     else
         echo "[错误] SQL 转换失败或文件为空，跳过还原，原数据库未受影响。"
     fi
