@@ -1,7 +1,13 @@
 #!/bin/bash
 # -----------------------------------------------------------------------------
-# entrypoint.sh - 容器启动引导 (支持热重载)
+# entrypoint.sh - 容器启动引导 (优化版)
 # -----------------------------------------------------------------------------
+
+# 定义一个用于触发重启的空文件
+TRIGGER_FILE="/app/.restart_trigger"
+if [ ! -f "$TRIGGER_FILE" ]; then
+    touch "$TRIGGER_FILE"
+fi
 
 # 1. 确保 backup.sh 可执行
 if [ -f "./backup.sh" ]; then
@@ -21,17 +27,14 @@ else
     echo "[Entrypoint] 未设置 GITHUB_TOKEN，仅启动主程序。"
 fi
 
-# 3. 启动应用程序 (核心修改点)
-echo "[Entrypoint] 正在启动应用程序 (使用 Nodemon 监控数据库变动)..."
+# 3. 启动应用程序
+echo "[Entrypoint] 正在启动应用程序..."
+echo "[Entrypoint] 监听模式: 仅在云端同步触发时重启 (监听 .restart_trigger)"
 
-# 解析：
-# exec: 替换当前进程
-# nodemon: 监控工具
-# --watch database/nav.db: 只要这个文件变了，就重启
-# --delay 2: 变动后等2秒再重启 (防止文件还没复制完就重启)
-# app.js: 你的入口文件
-
+# 核心修改：
+# 不再监听 nav.db，而是监听 .restart_trigger
+# 这样你本地添加书签、登录时，服务不会重启，体验更丝滑
 exec nodemon \
-  --watch database/nav.db \
-  --delay 2 \
+  --watch "$TRIGGER_FILE" \
+  --delay 1 \
   app.js
