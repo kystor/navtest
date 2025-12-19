@@ -1,5 +1,8 @@
 <template>
-  <div class="home-container">
+  <div 
+    class="home-container"
+    :style="customBackground ? { backgroundImage: `url('${customBackground}')` } : {}"
+  >
     <div class="menu-bar-fixed">
       <MenuBar 
         :menus="menus" 
@@ -39,13 +42,11 @@
       </div>
     </div>
     
-    <!-- 左侧广告条 -->
     <div v-if="leftAds.length" class="ad-space-fixed left-ad-fixed">
       <a v-for="ad in leftAds" :key="ad.id" :href="ad.url" target="_blank">
         <img :src="ad.img" alt="广告" />
       </a>
     </div>
-    <!-- 右侧广告条 -->
     <div v-if="rightAds.length" class="ad-space-fixed right-ad-fixed">
       <a v-for="ad in rightAds" :key="ad.id" :href="ad.url" target="_blank">
         <img :src="ad.img" alt="广告" />
@@ -67,7 +68,6 @@
       </div>
     </footer>
 
-    <!-- 友情链接弹窗 -->
     <div v-if="showFriendLinks" class="modal-overlay" @click="showFriendLinks = false">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
@@ -111,7 +111,8 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-import { getMenus, getCards, getAds, getFriends } from '../api';
+// [修改点 2] 引入 getConfig
+import { getMenus, getCards, getAds, getFriends, getConfig } from '../api';
 import MenuBar from '../components/MenuBar.vue';
 import CardGrid from '../components/CardGrid.vue';
 
@@ -124,6 +125,8 @@ const leftAds = ref([]);
 const rightAds = ref([]);
 const showFriendLinks = ref(false);
 const friendLinks = ref([]);
+// [修改点 3] 定义自定义背景变量
+const customBackground = ref('');
 
 // 聚合搜索配置
 const searchEngines = [
@@ -177,6 +180,16 @@ const filteredCards = computed(() => {
 });
 
 onMounted(async () => {
+  // [修改点 4] 获取系统配置（背景图等）
+  try {
+    const configRes = await getConfig();
+    if (configRes.data.background) {
+      customBackground.value = configRes.data.background;
+    }
+  } catch (e) {
+    console.error('Failed to load config:', e);
+  }
+
   const res = await getMenus();
   menus.value = res.data;
   if (menus.value.length) {
@@ -256,7 +269,7 @@ function handleLogoError(event) {
   width: 100vw;
   z-index: 100;
   /* background: rgba(0,0,0,0.6); /* 可根据需要调整 */
-  /* backdrop-filter: blur(8px);  /*  毛玻璃效果 */
+  /* backdrop-filter: blur(8px);  /* 毛玻璃效果 */
 }
 
 .search-engine-select {
@@ -341,6 +354,7 @@ function handleLogoError(event) {
 
 .home-container {
   min-height: 95vh;
+  /* 默认背景 */
   background-image: url('/background.webp');
   background-size: cover;
   background-position: center;
@@ -736,7 +750,4 @@ function handleLogoError(event) {
     gap: 20px;
   }
 }
-
-</style> 
-
-
+</style>
