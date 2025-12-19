@@ -7,6 +7,7 @@ module.exports = {
   },
   app: {
     title: process.env.SITE_TITLE || '我的导航' // 默认值为 '我的导航'
+    background: process.env.background || process.env.BACKGROUND || ''
   },
   server: {
     port: process.env.PORT || 3000,
@@ -14,3 +15,4 @@ module.exports = {
   }
 
 }; 
+
