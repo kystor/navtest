@@ -108,6 +108,7 @@ nav-item/
 | `GITHUB_EMAIL` | `bot@nav.backup` | Git 提交记录中的邮箱。 |
 | `GITHUB_NAME` | `NavBackupBot` | Git 提交记录中的用户名。 |
 | `SITE_TITLE` | `我的导航` | 网页名称。 |
+| `background` | `public文件夹中的图片` | 网页背景图，支持图片链接 |
 
 ### 数据库配置
 系统使用 SQLite 数据库，数据库文件会自动创建在项目/database/目录下，使用docker部署请挂载/app/database目录实现数据持久化
@@ -312,4 +313,5 @@ services:
       - BACKUP_REPO_URL=[https://github.com/yourname/your-repo.git](https://github.com/yourname/your-repo.git)
       - DB_PATH=/app/database/nav.db
       - GITHUB_EMAIL=my@email.com
+
 
