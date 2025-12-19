@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------------
-# Dockerfile - 最终版 (支持自动刷新 + 自动备份)
+# Dockerfile - (支持 SQL 文本备份 + 自动刷新)
 # -----------------------------------------------------------------------------
 FROM node:20-alpine3.20 AS frontend-builder
 
@@ -9,11 +9,10 @@ RUN npm install
 COPY web/ ./
 RUN npm run build
 
-# 生产环境
+# --- 生产环境 ---
 FROM node:20-alpine3.20 AS production
 
-# [修改点 1] 安装 nodemon (全局安装)
-# 同时也包含了之前的 git, bash, tzdata 等依赖
+# [关键修改] 安装 sqlite (用于导出/导入 SQL) 和 git
 RUN apk add --no-cache \
     sqlite \
     git \
@@ -39,12 +38,12 @@ COPY --from=frontend-builder /app/dist ./web/dist
 # 复制脚本
 COPY backup.sh entrypoint.sh ./
 
-# 权限处理
+# 权限处理 (确保脚本可执行)
 RUN sed -i 's/\r$//' backup.sh entrypoint.sh && \
     chmod +x backup.sh entrypoint.sh
 
 ENV NODE_ENV=production
 EXPOSE 3000/tcp
 
-# 启动入口保持不变，逻辑在 entrypoint.sh 里改
+# 启动入口
 ENTRYPOINT ["./entrypoint.sh"]
