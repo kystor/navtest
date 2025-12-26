@@ -127,7 +127,7 @@ nav-item/
 #### 1) 克隆项目
 
 ```bash
-git clone https://github.com/eooce/nav-Item.git
+git clone https://github.com/kystor/navtest.git
 cd nav-item
 ```
 
@@ -168,21 +168,21 @@ npm start
 
 ```bash
 docker run -d \
-  --name nav-item \
+  --name navtest \
   -p 3000:3000 \
   -v $(pwd)/database:/app/database \
   -v $(pwd)/uploads:/app/uploads \
   -e NODE_ENV=production \
   -e ADMIN_USERNAME=admin \
   -e ADMIN_PASSWORD=123456 \
-  eooce/nav-item
+  ghcr.io/kystor/navtest:latest
 ```
 
 ### 2) 可用镜像地址
 
 ```text
 eooce/nav-item
-ghcr.io/eooce/nav-item:latest
+ghcr.io/kystor/navtest:latest
 ```
 
 ---
@@ -196,7 +196,7 @@ version: "3"
 
 services:
   nav-item:
-    image: eooce/nav-item
+    image: ghcr.io/kystor/navtest:latest
     container_name: nav-item
     ports:
       - "3000:3000"
@@ -250,7 +250,7 @@ docker compose up -d
 * `DOMAIN`：自定义站点域名
 
 ```bash
-bash <(curl -Ls https://github.com/eooce/nav-item/releases/download/ct8-and-serv00/install.sh)
+bash <(curl -Ls https://github.com/kystor/navtest/releases/download/ct8-and-serv00/install.sh)
 ```
 
 ---
@@ -332,7 +332,7 @@ version: "3"
 services:
   # 1) 主应用
   nav-app:
-    image: eooce/nav-item
+    image: ghcr.io/kystor/navtest:latest
     container_name: nav-app
     restart: always
     volumes:
@@ -396,3 +396,4 @@ services:
 ---
 
 ⭐ 如果这个项目对你有帮助，欢迎点个 Star！
+
