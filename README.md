@@ -1,4 +1,4 @@
-````md
+
 # Nav-item - 个人导航站（Nav-item）
 
 > 教程（YouTube）：https://www.youtube.com/watch?v=AEXj3VR2LMY
@@ -400,3 +400,4 @@ services:
 ```
 ::contentReference[oaicite:0]{index=0}
 ```
+
