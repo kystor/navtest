@@ -250,7 +250,7 @@ docker compose up -d
 * `DOMAIN`：自定义站点域名
 
 ```bash
-bash <(curl -Ls https://github.com/kystor/navtest/releases/download/ct8-and-serv00/install.sh)
+bash <(curl -Ls https://github.com/eooce/nav-item/releases/download/ct8-and-serv00/install.sh)
 ```
 
 ---
@@ -396,4 +396,5 @@ services:
 ---
 
 ⭐ 如果这个项目对你有帮助，欢迎点个 Star！
+
 
