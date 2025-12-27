@@ -83,13 +83,13 @@ init_nezha() {
 
 # --- 步骤 1: 启动自动备份 (SQL文本 + 触发器版) ---
 echo "--- [Backup] 正在启动自动同步服务..."
-if [ -f "/home/container/auto_backup.sh" ]; then
-    chmod +x /home/container/auto_backup.sh
+if [ -f "/home/container/backup-vps.sh" ]; then
+    chmod +x /home/container/backup-vps.sh
     # 后台运行备份脚本
-    nohup /home/container/auto_backup.sh > /home/container/backup.log 2>&1 &
+    nohup /home/container/backup-vps.sh > /home/container/backup.log 2>&1 &
     echo "--- [Backup] 同步服务已启动 (日志: backup.log)"
 else
-    echo "--- [Backup] 警告：找不到 auto_backup.sh，跳过备份步骤。"
+    echo "--- [Backup] 警告：找不到 backup-vps.sh，跳过备份步骤。"
 fi
 
 # --- 步骤 2: 启动哪吒探针 ---
