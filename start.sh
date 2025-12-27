@@ -6,7 +6,7 @@
 # ====================================================
 
 # ⚠️⚠️⚠️ [重点] 哪吒探针安装命令 ⚠️⚠️⚠️
-NEZHA_COMMAND="curl -L https://raw.githubusercontent.com/nezhahq/scripts/main/agent/install.sh -o agent.sh && chmod +x agent.sh && env NZ_SERVER=rfszigcgcrnn.ap-northeast-1.clawcloudrun.com:443 NZ_TLS=true NZ_CLIENT_SECRET=UO34vC3lSOLNtuctz3yteZVSONlFmZ8t ./agent.sh"
+NEZHA_COMMAND=""
 
 # ====================================================
 # [模块 1] 哪吒探针功能函数
