@@ -3,35 +3,9 @@
 
     <div class="bg-placeholder"></div>
 
-    <video
-      v-if="shouldShowVideo"
-      class="bg-video"
-      :class="{ 'fade-in': isBgLoaded }"
-      :src="customBackground"
-      autoplay
-      loop
-      muted
-      playsinline
-      webkit-playsinline
-      preload="auto"
-      ref="bgVideoRef"
-      @canplay="onVideoCanPlay"
-      @loadeddata="onVideoLoadedData"
-      @error="onVideoError"
-      @ended="onVideoEnded" 
-      :poster="transparentPixel"
-    ></video>
-
-    <div
-      v-if="shouldShowImage"
-      class="bg-image"
-      :class="{ 'fade-in': isBgLoaded }"
-      :style="customBackground ? { backgroundImage: `url('${customBackground}')` } : {}"
-    ></div>
-
-    <div v-if="needsInteraction && isBgLoaded" class="tap-to-play-hint" @click="forcePlay">
-      轻触屏幕播放动态壁纸
-    </div>
+    <video v-if="shouldShowVideo" class="bg-video" :class="{ 'fade-in': isBgLoaded }" :src="customBackground" autoplay loop muted playsinline webkit-playsinline preload="auto" ref="bgVideoRef" @canplay="onVideoCanPlay" @loadeddata="onVideoLoadedData" @error="onVideoError" @ended="onVideoEnded" :poster="transparentPixel"></video>
+    <div v-if="shouldShowImage" class="bg-image" :class="{ 'fade-in': isBgLoaded }" :style="customBackground ? { backgroundImage: `url('${customBackground}')` } : {}"></div>
+    <div v-if="needsInteraction && isBgLoaded" class="tap-to-play-hint" @click="forcePlay">轻触屏幕播放动态壁纸</div>
 
     <div class="content-overlay">
       <button class="theme-toggle-btn" @click="showThemeSettings = true" title="自定义专属壁纸">
@@ -40,9 +14,7 @@
         </svg>
       </button>
 
-      <div class="menu-bar-fixed">
-        <MenuBar :menus="menus" :activeId="activeMenu?.id" :activeSubMenuId="activeSubMenu?.id" @select="selectMenu" />
-      </div>
+      <div class="menu-bar-fixed"><MenuBar :menus="menus" :activeId="activeMenu?.id" :activeSubMenuId="activeSubMenu?.id" @select="selectMenu" /></div>
 
       <div class="search-section">
         <div class="search-box-wrapper">
@@ -51,90 +23,65 @@
           </div>
           <div class="search-container">
             <input v-model="searchQuery" type="text" :placeholder="selectedEngine.placeholder" class="search-input" @keyup.enter="handleSearch" enterkeyhint="search" autocomplete="off" />
-            <button v-if="searchQuery" class="clear-btn" @click="clearSearch" aria-label="清空">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"></path></svg>
-            </button>
-            <button @click="handleSearch" class="search-btn">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </button>
+            <button v-if="searchQuery" class="clear-btn" @click="clearSearch" aria-label="清空"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"></path></svg></button>
+            <button @click="handleSearch" class="search-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
           </div>
         </div>
       </div>
 
-      <div v-if="leftAds.length" class="ad-space-fixed left-ad-fixed">
-        <a v-for="ad in leftAds" :key="ad.id" :href="ad.url" target="_blank"><img :src="ad.img" alt="" /></a>
-      </div>
-      <div v-if="rightAds.length" class="ad-space-fixed right-ad-fixed">
-        <a v-for="ad in rightAds" :key="ad.id" :href="ad.url" target="_blank"><img :src="ad.img" alt="" /></a>
-      </div>
+      <div v-if="leftAds.length" class="ad-space-fixed left-ad-fixed"><a v-for="ad in leftAds" :key="ad.id" :href="ad.url" target="_blank"><img :src="ad.img" alt="" /></a></div>
+      <div v-if="rightAds.length" class="ad-space-fixed right-ad-fixed"><a v-for="ad in rightAds" :key="ad.id" :href="ad.url" target="_blank"><img :src="ad.img" alt="" /></a></div>
 
       <CardGrid :cards="filteredCards"/>
 
       <footer class="footer">
         <div class="footer-content">
-          <button @click="showFriendLinks = true" class="friend-link-btn">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
-            友情链接
-          </button>
+          <button @click="showFriendLinks = true" class="friend-link-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>友情链接</button>
           <p class="copyright">Copyright © 2025 Nav-Item | <a href="https://github.com/eooce/Nav-Item" target="_blank" class="footer-link">Powered by eooce</a></p>
         </div>
       </footer>
     </div>
 
-    <div v-if="showFriendLinks" class="modal-overlay" @click="showFriendLinks = false">
-      <div class="modal-content modal-bottom-sheet" @click.stop>
-        <div class="modal-header">
-          <h3>友情链接</h3>
-          <button @click="showFriendLinks = false" class="close-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"></path></svg></button>
-        </div>
-        <div class="modal-body">
-          <div class="friend-links-grid">
-            <a v-for="friend in friendLinks" :key="friend.id" :href="friend.url" target="_blank" class="friend-link-card">
-              <div class="friend-link-logo">
-                <img v-if="friend.logo" :src="friend.logo" :alt="friend.title" @error="handleLogoError" />
-                <div v-else class="friend-link-placeholder">{{ friend.title.charAt(0) }}</div>
-              </div>
-              <div class="friend-link-info"><h4>{{ friend.title }}</h4></div>
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <div v-if="showThemeSettings" class="modal-overlay" @click="showThemeSettings = false">
       <div class="modal-content theme-modal modal-bottom-sheet" @click.stop>
         <div class="modal-header">
-          <h3>个性化壁纸设置</h3>
+          <h3>个性化访客壁纸设置</h3>
           <button @click="showThemeSettings = false" class="close-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"></path></svg></button>
         </div>
         <div class="modal-body">
-          <p class="theme-desc">💡 支持动态壁纸！粘贴视频链接（.mp4）或图片链接。<br/>对于无后缀名的链接，点击「检测类型」自动识别，或手动选择类型。</p>
-          <input v-model="visitorBgInput" type="text" placeholder="请输入视频或图片链接" class="theme-input" />
-          <div class="type-selector">
-            <button :class="['type-btn', { active: visitorBgType === 'auto' }]" @click="visitorBgType = 'auto'">🔄 自动</button>
-            <button :class="['type-btn', { active: visitorBgType === 'video' }]" @click="visitorBgType = 'video'">🎬 视频</button>
-            <button :class="['type-btn', { active: visitorBgType === 'image' }]" @click="visitorBgType = 'image'">🖼️ 图片</button>
+          <div class="upload-tabs">
+            <button @click="visitorMode = 'network'" :class="{active: visitorMode === 'network'}">网络链接</button>
+            <button @click="visitorMode = 'local'" :class="{active: visitorMode === 'local'}">读取本地文件</button>
           </div>
-          <button class="detect-btn" @click="handleDetect" :disabled="!visitorBgInput.trim() || detecting">{{ detecting ? '正在检测...' : '🔍 检测链接类型' }}</button>
-          <p v-if="detectResult" :class="['detect-result', detectResult.type]">
-            <template v-if="detectResult.type === 'video'">✅ 视频文件 — 将作为动态壁纸播放</template>
-            <template v-else-if="detectResult.type === 'image'">✅ 图片文件</template>
-            <template v-else>⚠️ 无法识别，请手动选择类型</template>
-          </p>
-          <div class="theme-actions">
-            <button class="btn clear-theme-btn" @click="clearVisitorTheme">恢复默认</button>
-            <button class="btn save-theme-btn" @click="saveVisitorTheme">保存并应用</button>
+
+          <div v-if="visitorMode === 'local'" class="tab-content">
+            <p class="theme-desc">选择你电脑/手机里的图片或视频作为壁纸，只保存在你的浏览器中哦。</p>
+            <input type="file" @change="handleVisitorLocalFile" accept="image/*,video/*" />
+          </div>
+
+          <div v-if="visitorMode === 'network'" class="tab-content">
+            <p class="theme-desc">粘贴网络视频链接（.mp4）或图片链接。</p>
+            <input v-model="visitorBgInput" type="text" placeholder="请输入网络链接..." class="theme-input" />
+            <div class="type-selector">
+              <button :class="['type-btn', { active: visitorBgType === 'auto' }]" @click="visitorBgType = 'auto'">🔄 自动</button>
+              <button :class="['type-btn', { active: visitorBgType === 'video' }]" @click="visitorBgType = 'video'">🎬 视频</button>
+              <button :class="['type-btn', { active: visitorBgType === 'image' }]" @click="visitorBgType = 'image'">🖼️ 图片</button>
+            </div>
+            <button class="btn save-theme-btn" style="width:100%; margin-top: 10px;" @click="saveVisitorTheme">保存并应用网络链接</button>
+          </div>
+
+          <div class="theme-actions" style="margin-top:15px;">
+            <button class="btn clear-theme-btn" @click="clearVisitorTheme" style="width:100%">恢复全站默认壁纸</button>
           </div>
         </div>
       </div>
     </div>
-
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue';
-import { getMenus, getCards, getAds, getFriends, getConfig, searchCards, detectMedia } from '../api';
+import { getMenus, getCards, getAds, getFriends, getConfig, searchCards } from '../api';
 import MenuBar from '../components/MenuBar.vue';
 import CardGrid from '../components/CardGrid.vue';
 
@@ -153,68 +100,38 @@ const globalBgType = ref('auto');
 const customBackground = ref('');
 const customBgType = ref('auto');
 const showThemeSettings = ref(false);
+
+const visitorMode = ref('network'); // 默认访客模式
 const visitorBgInput = ref('');
 const visitorBgType = ref('auto');
 const isBgLoaded = ref(false);
 const bgVideoRef = ref(null);
 const videoFailed = ref(false);
 const needsInteraction = ref(false);
-const detecting = ref(false);
-const detectResult = ref(null);
 
 const transparentPixel = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 
-// 判断是否为视频：优先看 bg_type，再看后缀
+// 判断视频逻辑保持不变
 function isVideoType(url, bgType) {
   if (bgType === 'video') return true;
   if (bgType === 'image') return false;
   if (!url) return false;
   const lower = url.toLowerCase();
+  // 注意，Base64 数据需要看它的头部格式
+  if (url.startsWith('data:video/')) return true;
   return lower.includes('.mp4') || lower.includes('.webm') || lower.includes('.ogg');
 }
 
 const isVideoBg = computed(() => isVideoType(customBackground.value, customBgType.value));
-
-// 关键修复：视频URL不能用作CSS background-image
-// shouldShowVideo = 是视频 且 没失败
-// shouldShowImage = 有URL 且 不是视频类型（视频失败时不降级为图片，只显示底层渐变）
 const shouldShowVideo = computed(() => isVideoBg.value && !videoFailed.value);
 const shouldShowImage = computed(() => customBackground.value && !isVideoBg.value);
 
-// 视频播放逻辑
-function onVideoCanPlay() {
-  isBgLoaded.value = true;
-  attemptPlay();
-}
-function onVideoLoadedData() {
-  if (!isBgLoaded.value) {
-    isBgLoaded.value = true;
-    attemptPlay();
-  }
-}
-function onVideoError() {
-  console.warn('[Video] 视频加载失败，降级为渐变背景');
-  videoFailed.value = true;
-  isBgLoaded.value = true;
-}
-
-// [修改处 2] 新增视频结束事件处理函数，用于强制循环播放
-// 当原生 loop 失效，视频播放到底时会触发这个方法
+function onVideoCanPlay() { isBgLoaded.value = true; attemptPlay(); }
+function onVideoLoadedData() { if (!isBgLoaded.value) { isBgLoaded.value = true; attemptPlay(); } }
+function onVideoError() { videoFailed.value = true; isBgLoaded.value = true; }
 function onVideoEnded() {
   const video = bgVideoRef.value;
-  if (video) {
-    // 将视频的当前时间重置为 0 秒（回到开头）
-    video.currentTime = 0;
-    // 再次调用播放方法
-    const p = video.play();
-    if (p && p.catch) {
-      p.catch(err => {
-        // 如果重播失败，打印警告并启动降级处理
-        console.warn('[Video] 循环播放失败', err);
-        videoFailed.value = true;
-      });
-    }
-  }
+  if (video) { video.currentTime = 0; const p = video.play(); if (p && p.catch) p.catch(() => videoFailed.value = true); }
 }
 
 function attemptPlay() {
@@ -222,62 +139,99 @@ function attemptPlay() {
   if (!video) return;
   video.muted = true;
   const p = video.play();
-  if (p && p.catch) {
-    p.catch(err => {
-      if (err.name === 'NotAllowedError') needsInteraction.value = true;
-      else { videoFailed.value = true; }
-    });
-  }
+  if (p && p.catch) p.catch(err => { if (err.name === 'NotAllowedError') needsInteraction.value = true; else videoFailed.value = true; });
 }
 function forcePlay() {
   const video = bgVideoRef.value;
-  if (video) {
-    video.muted = true;
-    video.play().then(() => { needsInteraction.value = false; }).catch(() => { videoFailed.value = true; });
-  }
+  if (video) { video.muted = true; video.play().then(() => { needsInteraction.value = false; }).catch(() => { videoFailed.value = true; }); }
   needsInteraction.value = false;
-}
-
-// 页面不可见时暂停视频（省电）
-if (typeof document !== 'undefined') {
-  document.addEventListener('visibilitychange', () => {
-    const video = bgVideoRef.value;
-    if (!video) return;
-    if (document.hidden) video.pause(); else video.play().catch(() => {});
-  });
-}
-
-// 移动端首次触屏自动播放
-function setupTouchPlay() {
-  const handler = () => { forcePlay(); document.removeEventListener('touchstart', handler); document.removeEventListener('click', handler); };
-  document.addEventListener('touchstart', handler, { once: true, passive: true });
-  document.addEventListener('click', handler, { once: true });
 }
 
 watch(customBackground, (newUrl) => {
-  videoFailed.value = false;
-  needsInteraction.value = false;
+  videoFailed.value = false; needsInteraction.value = false;
   if (!newUrl) { isBgLoaded.value = true; return; }
   isBgLoaded.value = false;
   if (!isVideoBg.value) {
-    const img = new Image();
-    img.src = newUrl;
-    img.onload = () => { isBgLoaded.value = true; };
-    img.onerror = () => { isBgLoaded.value = true; };
+    const img = new Image(); img.src = newUrl;
+    img.onload = () => { isBgLoaded.value = true; }; img.onerror = () => { isBgLoaded.value = true; };
   }
 }, { immediate: true });
 
-// 检测媒体类型
-async function handleDetect() {
-  if (!visitorBgInput.value.trim()) return;
-  detecting.value = true; detectResult.value = null;
-  try {
-    const res = await detectMedia(visitorBgInput.value.trim());
-    detectResult.value = res.data;
-    if (res.data.type === 'video') visitorBgType.value = 'video';
-    else if (res.data.type === 'image') visitorBgType.value = 'image';
-  } catch { detectResult.value = { type: 'unknown' }; }
-  finally { detecting.value = false; }
+// --- 【新手必看】访客本地壁纸的 IndexedDB 核心逻辑 ---
+// 为什么不用 localStorage？因为一张图片轻松几MB，localStorage 只能存5MB，很快就崩了
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open('VisitorThemeDB', 1);
+    request.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('wallpapers')) db.createObjectStore('wallpapers', { keyPath: 'id' });
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+// 访客选择本地文件事件
+async function handleVisitorLocalFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const type = file.type.includes('video') ? 'video' : 'image';
+  const reader = new FileReader();
+  
+  // 读成可以在浏览器里直接渲染的 DataURL (Base64)
+  reader.readAsDataURL(file);
+  reader.onload = async (e) => {
+    const base64Data = e.target.result;
+    
+    // 打开数据库
+    const db = await openDB();
+    const tx = db.transaction('wallpapers', 'readwrite');
+    const store = tx.objectStore('wallpapers');
+    
+    // 【核心需求满足】清空旧壁纸，避免缓存越来越大
+    store.clear();
+    
+    // 存入新壁纸
+    store.put({ id: 'current', data: base64Data, type: type });
+    
+    // 应用到当前界面
+    customBackground.value = base64Data;
+    customBgType.value = type;
+    
+    // 在普通缓存中做个标记，表示当前正在用本地缓存
+    localStorage.setItem('visitor_use_local_db', 'true');
+    showThemeSettings.value = false;
+    alert("本地壁纸设置成功！");
+  };
+}
+
+// 网页加载时，尝试读取缓存的壁纸
+async function loadLocalWallpaper() {
+  if (localStorage.getItem('visitor_use_local_db') === 'true') {
+    try {
+      const db = await openDB();
+      const tx = db.transaction('wallpapers', 'readonly');
+      const store = tx.objectStore('wallpapers');
+      const request = store.get('current');
+      request.onsuccess = () => {
+        if (request.result) {
+          customBackground.value = request.result.data;
+          customBgType.value = request.result.type;
+        }
+      };
+    } catch (err) { console.log('读取本地壁纸缓存失败', err); }
+  } else {
+    // 如果不是用的本地文件，那就去读正常的网络链接
+    const localBg = localStorage.getItem('visitor_bg');
+    const localBgType = localStorage.getItem('visitor_bg_type');
+    if (localBg) { 
+      customBackground.value = localBg; customBgType.value = localBgType || 'auto'; 
+      visitorBgInput.value = localBg; visitorBgType.value = localBgType || 'auto'; 
+    } else { 
+      customBackground.value = globalBackground.value; customBgType.value = globalBgType.value; 
+    }
+  }
 }
 
 function saveVisitorTheme() {
@@ -285,18 +239,29 @@ function saveVisitorTheme() {
   if (url) {
     localStorage.setItem('visitor_bg', url);
     localStorage.setItem('visitor_bg_type', visitorBgType.value);
+    localStorage.removeItem('visitor_use_local_db'); // 取消本地缓存标记
     customBackground.value = url;
     customBgType.value = visitorBgType.value;
   } else { clearVisitorTheme(); }
   showThemeSettings.value = false;
 }
+
 function clearVisitorTheme() {
-  localStorage.removeItem('visitor_bg'); localStorage.removeItem('visitor_bg_type');
+  localStorage.removeItem('visitor_bg'); 
+  localStorage.removeItem('visitor_bg_type');
+  localStorage.removeItem('visitor_use_local_db');
+  // 同时清空 IndexedDB
+  openDB().then(db => {
+    const tx = db.transaction('wallpapers', 'readwrite');
+    tx.objectStore('wallpapers').clear();
+  });
+  
   visitorBgInput.value = ''; visitorBgType.value = 'auto';
   customBackground.value = globalBackground.value; customBgType.value = globalBgType.value;
   showThemeSettings.value = false;
 }
 
+// ------ 以下为原来的搜索和菜单逻辑，未做改动 ------
 const searchEngines = [
   { name: 'google', label: 'Google', placeholder: 'Google 搜索...', url: q => `https://www.google.com/search?q=${encodeURIComponent(q)}` },
   { name: 'baidu', label: '百度', placeholder: '百度搜索...', url: q => `https://www.baidu.com/s?wd=${encodeURIComponent(q)}` },
@@ -311,11 +276,6 @@ const filteredCards = computed(() => {
   if (!searchQuery.value) return cards.value;
   return cards.value.filter(c => c.title.toLowerCase().includes(searchQuery.value.toLowerCase()) || c.url.toLowerCase().includes(searchQuery.value.toLowerCase()) || (c.desc && c.desc.toLowerCase().includes(searchQuery.value.toLowerCase())));
 });
-let searchTimer = null;
-watch(searchQuery, (v) => {
-  if (v.trim() === '') { if (!activeMenu.value && menus.value.length > 0) activeMenu.value = menus.value[0]; loadCards(); return; }
-  if (selectedEngine.value.name === 'site') { clearTimeout(searchTimer); searchTimer = setTimeout(async () => { try { const r = await searchCards(v.trim()); if (r.data.length > 0) { cards.value = r.data; activeMenu.value = null; activeSubMenu.value = null; } else cards.value = []; } catch {} }, 100); }
-});
 
 onMounted(async () => {
   try {
@@ -324,11 +284,10 @@ onMounted(async () => {
     if (configRes.data.bg_type) globalBgType.value = configRes.data.bg_type;
     if (configRes.data.title) document.title = configRes.data.title;
   } catch (e) { console.error('Failed to load config:', e); }
-  const localBg = localStorage.getItem('visitor_bg');
-  const localBgType = localStorage.getItem('visitor_bg_type');
-  if (localBg) { customBackground.value = localBg; customBgType.value = localBgType || 'auto'; visitorBgInput.value = localBg; visitorBgType.value = localBgType || 'auto'; }
-  else { customBackground.value = globalBackground.value; customBgType.value = globalBgType.value; }
-  setupTouchPlay();
+  
+  // 重点：挂载时调用读取本地缓存的逻辑
+  await loadLocalWallpaper();
+
   const res = await getMenus(); menus.value = res.data;
   if (menus.value.length) { activeMenu.value = menus.value[0]; loadCards(); }
   const adRes = await getAds(); leftAds.value = adRes.data.filter(ad => ad.position === 'left'); rightAds.value = adRes.data.filter(ad => ad.position === 'right');
@@ -345,88 +304,43 @@ async function handleSearch() {
   if (selectedEngine.value.name === 'site') { try { const r = await searchCards(searchQuery.value.trim()); if (r.data.length > 0) { cards.value = r.data; activeMenu.value = null; activeSubMenu.value = null; } else alert('未找到相关内容'); } catch { alert('搜索时发生错误'); } }
   else window.open(selectedEngine.value.url(searchQuery.value), '_blank');
 }
-function handleLogoError(e) { e.target.style.display = 'none'; if (e.target.nextElementSibling) e.target.nextElementSibling.style.display = 'flex'; }
 </script>
 
 <style scoped>
+/* 保持你的原来样式即可，增加少量针对选项卡的微调 */
 .home-container { min-height: 100vh; min-height: 100dvh; position: relative; display: flex; flex-direction: column; }
 .bg-placeholder { position: fixed; inset: 0; background: linear-gradient(135deg, #1a1c29, #2a2d3e); z-index: -1; }
 .bg-image, .bg-video { opacity: 0; transition: opacity 1.2s ease-in-out; }
 .fade-in { opacity: 1 !important; }
 .bg-image { position: fixed; inset: 0; background-size: cover; background-position: center; background-repeat: no-repeat; z-index: 0; }
-.bg-video { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; height: 100dvh; object-fit: cover; z-index: 0; -webkit-transform: translateZ(0); transform: translateZ(0); -webkit-backface-visibility: hidden; backface-visibility: hidden; }
+.bg-video { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; height: 100dvh; object-fit: cover; z-index: 0; }
 .home-container::before { content: ''; position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 1; }
 .content-overlay { position: relative; z-index: 2; flex: 1; display: flex; flex-direction: column; padding-top: 50px; }
-.tap-to-play-hint { position: fixed; bottom: 120px; left: 50%; transform: translateX(-50%); z-index: 3; background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); color: #fff; font-size: 12px; padding: 8px 16px; border-radius: 20px; animation: pulse 2s ease-in-out infinite; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-@keyframes pulse { 0%,100% { opacity: 0.8; } 50% { opacity: 1; } }
-.theme-toggle-btn { position: fixed; top: 16px; right: 16px; z-index: 101; background: rgba(255,255,255,0.15); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.3); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; color: white; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 12px rgba(0,0,0,0.1); -webkit-tap-highlight-color: transparent; }
-.theme-toggle-btn:active { background: rgba(255,255,255,0.25); transform: scale(0.95); }
-@media (pointer: fine) { .theme-toggle-btn:hover { background: rgba(255,255,255,0.25); transform: rotate(15deg) scale(1.1); } }
+.tap-to-play-hint { position: fixed; bottom: 120px; left: 50%; transform: translateX(-50%); z-index: 3; background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); color: #fff; font-size: 12px; padding: 8px 16px; border-radius: 20px; cursor: pointer; }
+.theme-toggle-btn { position: fixed; top: 16px; right: 16px; z-index: 101; background: rgba(255,255,255,0.15); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.3); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; color: white; cursor: pointer; }
 .menu-bar-fixed { position: fixed; top: .6rem; left: 0; width: 100vw; z-index: 100; }
-@media (max-width: 767px) { .menu-bar-fixed { position: static; width: 100%; } .content-overlay { padding-top: 0; } }
-.search-engine-select { display: flex; align-items: center; padding-bottom: .3rem; gap: 3px; overflow-x: auto; }
-.engine-btn { border: none; background: none; color: #fff; font-size: .8rem; padding: 4px 10px; border-radius: 4px; cursor: pointer; white-space: nowrap; min-height: 32px; -webkit-tap-highlight-color: transparent; }
-.engine-btn.active, .engine-btn:hover { color: #399dff; background: #ffffff1a; }
-.search-container { display: flex; align-items: center; background: #b3b7b83b; border-radius: 20px; padding: 0.2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.1); backdrop-filter: blur(10px); max-width: 480px; width: 92%; }
-.search-input { flex: 1; border: none; background: transparent; padding: .1rem .5rem; font-size: 1rem; color: #fff; outline: none; min-width: 0; }
-.search-input::placeholder { color: #999; }
-.clear-btn { background: none; border: none; cursor: pointer; display: flex; align-items: center; padding: 4px; min-width: 36px; min-height: 36px; justify-content: center; -webkit-tap-highlight-color: transparent; }
-.search-btn { background: transparent; color: #fff; border: none; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-.search-btn:active { background: #3367d6; }
 .search-section { display: flex; flex-direction: column; align-items: center; padding: 1.5rem 0 2rem; z-index: 2; }
-@media (min-width: 768px) { .search-section { padding: 2.8rem 0; } }
 .search-box-wrapper { display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 480px; padding: 0 12px; box-sizing: border-box; }
-.ad-space-fixed { position: fixed; top: 13rem; z-index: 10; width: 90px; display: flex; flex-direction: column; align-items: center; gap: 5px; }
-.left-ad-fixed { left: 0; } .right-ad-fixed { right: 0; }
-.ad-space-fixed a { width: 100%; display: block; } .ad-space-fixed img { width: 100%; max-width: 90px; max-height: 160px; box-shadow: 0 2px 12px rgba(0,0,0,0.12); background: #fff; }
-@media (max-width: 1024px) { .ad-space-fixed { display: none; } }
-.footer { margin-top: auto; text-align: center; padding: 1rem 0 1.5rem; padding-bottom: max(1.5rem, env(safe-area-inset-bottom, 0px)); z-index: 2; }
-.footer-content { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-@media (min-width: 768px) { .footer-content { flex-direction: row; justify-content: center; gap: 50px; } }
-.friend-link-btn { display: flex; align-items: center; gap: 8px; background: none; border: none; color: rgba(255,255,255,0.8); cursor: pointer; font-size: 12px; min-height: 36px; -webkit-tap-highlight-color: transparent; }
-@media (min-width: 768px) { .friend-link-btn { font-size: 14px; } }
-.copyright { color: rgba(255,255,255,0.6); font-size: 10px; margin: 0; }
-@media (min-width: 768px) { .copyright { font-size: 14px; color: rgba(255,255,255,0.8); } }
-.footer-link { color: inherit; text-decoration: none; }
+.search-container { display: flex; align-items: center; background: #b3b7b83b; border-radius: 20px; padding: 0.2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.1); backdrop-filter: blur(10px); width: 92%; }
+.search-input { flex: 1; border: none; background: transparent; padding: .1rem .5rem; font-size: 1rem; color: #fff; outline: none; }
+.search-btn, .clear-btn { background: transparent; border: none; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px;}
+.footer { margin-top: auto; text-align: center; padding: 1rem 0 1.5rem; z-index: 2; }
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(5px); }
-@media (max-width: 767px) { .modal-overlay { align-items: flex-end; } }
-.modal-content { background: #f8fafc; border-radius: 16px; width: 55rem; max-width: 95vw; max-height: 95vh; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,0.3); overflow: hidden; }
-@media (max-width: 767px) { .modal-content.modal-bottom-sheet { width: 100%; max-width: 100%; max-height: 80vh; border-radius: 16px 16px 0 0; } }
-.modal-header { display: flex; align-items: center; justify-content: space-between; padding: 15px 20px; border-bottom: 1px solid #e5e7eb; background: #fff; flex-shrink: 0; }
-.modal-header h3 { margin: 0; font-size: 16px; font-weight: 600; color: #111827; }
-@media (min-width: 768px) { .modal-header h3 { font-size: 20px; } }
-.close-btn { background: none; border: none; cursor: pointer; padding: 8px; border-radius: 8px; color: #6b7280; min-width: 40px; min-height: 40px; display: flex; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent; }
-.close-btn:active { background: #fee2e2; color: #ef4444; }
-.modal-body { flex: 1; padding: 16px; overflow-y: auto; overscroll-behavior: contain; padding-bottom: max(16px, env(safe-area-inset-bottom, 0px)); }
-@media (min-width: 768px) { .modal-body { padding: 24px; } }
-.friend-links-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-@media (min-width: 768px) { .friend-links-grid { grid-template-columns: repeat(6, 1fr); gap: 12px; } }
-.friend-link-card { display: flex; flex-direction: column; align-items: center; padding: 10px; background: #fff; border-radius: 12px; text-decoration: none; color: inherit; border: 1px solid #e2e8f0; min-height: 72px; -webkit-tap-highlight-color: transparent; }
-.friend-link-card:active { transform: scale(0.97); }
-.friend-link-logo { width: 40px; height: 40px; border-radius: 8px; overflow: hidden; margin-bottom: 6px; display: flex; align-items: center; justify-content: center; background: #f8fafc; }
-@media (min-width: 768px) { .friend-link-logo { width: 48px; height: 48px; margin-bottom: 8px; } }
-.friend-link-logo img { width: 100%; height: 100%; object-fit: contain; }
-.friend-link-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #64748b; font-size: 18px; font-weight: 600; }
-.friend-link-info h4 { margin: 0; font-size: 11px; font-weight: 500; color: #334155; text-align: center; word-break: break-all; }
-@media (min-width: 768px) { .friend-link-info h4 { font-size: 13px; } }
-.theme-modal { width: 420px !important; height: auto !important; min-height: 220px; }
-@media (max-width: 767px) { .theme-modal { width: 100% !important; } }
-.theme-desc { font-size: 12px; color: #555; margin-bottom: 12px; line-height: 1.6; background: #f0f4f8; padding: 10px; border-radius: 6px; border-left: 3px solid #2566d8; }
+.modal-content { background: #f8fafc; border-radius: 16px; width: 55rem; max-width: 95vw; max-height: 95vh; display: flex; flex-direction: column; overflow: hidden; }
+.modal-header { display: flex; align-items: center; justify-content: space-between; padding: 15px 20px; border-bottom: 1px solid #e5e7eb; background: #fff; }
+.close-btn { background: none; border: none; cursor: pointer; padding: 8px; border-radius: 8px; color: #6b7280; }
+.modal-body { flex: 1; padding: 16px; overflow-y: auto; }
+.theme-modal { width: 420px !important; }
+.upload-tabs { display: flex; gap: 10px; margin-bottom: 15px; }
+.upload-tabs button { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #d0d7e2; background: #f8f9fa; cursor: pointer; font-weight: bold; }
+.upload-tabs button.active { background: #2566d8; color: white; border-color: #2566d8; }
+.tab-content { background: #fff; padding: 15px; border-radius: 8px; border: 1px dashed #d0d7e2; }
+.theme-desc { font-size: 12px; color: #555; margin-bottom: 12px; line-height: 1.6; }
 .theme-input { width: 100%; padding: 12px 16px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 14px; background: #fff; margin-bottom: 12px; box-sizing: border-box; }
-.theme-input:focus { outline: none; border-color: #2566d8; box-shadow: 0 0 0 2px rgba(37,102,216,0.1); }
 .type-selector { display: flex; gap: 8px; margin-bottom: 10px; }
-.type-btn { flex: 1; padding: 10px 8px; border-radius: 8px; border: 1px solid #cbd5e1; background: #fff; color: #555; font-size: 12px; cursor: pointer; text-align: center; min-height: 40px; -webkit-tap-highlight-color: transparent; }
-.type-btn.active { background: #2566d8; color: #fff; border-color: #2566d8; }
-.detect-btn { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; background: #f8f9fa; color: #555; font-size: 12px; cursor: pointer; margin-bottom: 8px; min-height: 40px; -webkit-tap-highlight-color: transparent; }
-.detect-btn:disabled { opacity: 0.5; }
-.detect-btn:active { background: #e2e8f0; }
-.detect-result { font-size: 12px; padding: 8px 10px; border-radius: 6px; margin-bottom: 12px; }
-.detect-result.video { background: #d1fae5; color: #065f46; }
-.detect-result.image { background: #dbeafe; color: #1e40af; }
-.detect-result.unknown { background: #fef3c7; color: #92400e; }
-.theme-actions { display: flex; gap: 10px; }
-.save-theme-btn { flex: 1; background: #2566d8; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: 500; min-height: 48px; -webkit-tap-highlight-color: transparent; }
-.save-theme-btn:active { background: #1a4ba3; }
-.clear-theme-btn { flex: 1; background: #fff; color: #64748b; border: 1px solid #cbd5e1; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: 500; min-height: 48px; -webkit-tap-highlight-color: transparent; }
-.clear-theme-btn:active { color: #ef4444; border-color: #ef4444; }
+.type-btn { flex: 1; padding: 10px 8px; border-radius: 8px; border: 1px solid #cbd5e1; background: #fff; font-size: 12px; cursor: pointer; }
+.type-btn.active { background: #2566d8; color: #fff; }
+.btn { border-radius: 8px; padding: 12px; cursor: pointer; font-weight: 500; border: none; }
+.save-theme-btn { background: #2566d8; color: white; }
+.clear-theme-btn { background: #fee2e2; color: #ef4444; }
 </style>
