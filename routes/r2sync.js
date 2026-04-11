@@ -1,8 +1,9 @@
 /**
  * routes/r2sync.js - Cloudflare R2 同步核心模块
  *
- * 修复问题：listByPrefix 可能因为分页或权限问题导致文件列表不完整
- * 解决方案：添加 MaxKeys 参数、详细日志、分页支持
+ * 日志风格与 backup.sh 保持一致: [R2] 前缀 + 中文描述。
+ * uploadToR2 使用流式上传，支持大文件 (100MB+)。
+ * 历史壁纸清理: 保留最近 5 张，自动删除旧文件。
  */
 const fs = require('fs');
 const path = require('path');
@@ -37,6 +38,7 @@ function getR2PublicUrl(r2Key) {
 
 /**
  * 流式上传本地文件到 R2，支持大文件 (80MB+)
+ * 使用 createReadStream 而非 readFileSync，避免内存爆炸
  */
 async function uploadToR2(localPath, r2Key, mimeType) {
   if (!isR2Enabled()) return null;
@@ -92,114 +94,44 @@ async function deleteFromR2(r2Key) {
 }
 
 /**
- * 【修复】列出指定前缀的所有对象，支持分页获取
- * 
- * 修复内容：
- * 1. 添加 MaxKeys: 1000 参数，确保每次请求返回足够多的对象
- * 2. 添加分页循环，使用 ContinuationToken 获取所有对象
- * 3. 添加详细日志，方便调试
- * 4. 返回所有匹配的文件列表
+ * 列出指定前缀的所有对象，按 LastModified 降序排列
  */
 async function listByPrefix(prefix) {
-  if (!isR2Enabled() || !ListCmd) {
-    console.warn('[R2] R2 未启用或 ListCmd 不可用');
-    return [];
-  }
-  
-  const allItems = [];
-  let continuationToken = null;
-  let pageCount = 0;
-  
+  if (!isR2Enabled() || !ListCmd) return [];
   try {
-    do {
-      pageCount++;
-      const params = {
-        Bucket: bucketName,
-        Prefix: prefix,
-        MaxKeys: 1000,  // 显式设置最大返回数量
-      };
-      
-      if (continuationToken) {
-        params.ContinuationToken = continuationToken;
-      }
-      
-      const resp = await s3.send(new ListCmd(params));
-      
-      if (resp.Contents && resp.Contents.length > 0) {
-        const pageItems = resp.Contents.map(obj => ({
-          key: obj.Key,
-          lastModified: obj.LastModified,
-          size: obj.Size,
-          etag: obj.ETag
-        }));
-        allItems.push(...pageItems);
-        console.log(`[R2] 列出对象 (第${pageCount}页): 找到 ${pageItems.length} 个文件，前缀: ${prefix}`);
-      }
-      
-      continuationToken = resp.NextContinuationToken;
-      
-    } while (continuationToken);  // 循环直到获取所有对象
-    
-    console.log(`[R2] 列出对象完成: 共找到 ${allItems.length} 个文件，前缀: ${prefix}`);
-    
-    // 按最后修改时间降序排列
-    allItems.sort((a, b) => new Date(b.lastModified) - new Date(a.lastModified));
-    
-    // 打印前几个文件名，方便调试
-    if (allItems.length > 0) {
-      console.log(`[R2] 文件列表 (前5个):`, allItems.slice(0, 5).map(i => i.key).join(', '));
-    }
-    
-    return allItems;
-  } catch(e) {
-    console.error('[R2] 列出对象失败:', e.message);
-    console.error('[R2] 错误详情:', e);
-    return [];
-  }
+    const resp = await s3.send(new ListCmd({ Bucket:bucketName, Prefix:prefix }));
+    const items = (resp.Contents || []).map(obj => ({
+      key: obj.Key,
+      lastModified: obj.LastModified,
+      size: obj.Size,
+      etag: obj.ETag
+    }));
+    items.sort((a, b) => new Date(b.lastModified) - new Date(a.lastModified));
+    return items;
+  } catch(e) { console.error('[R2] 列出对象失败:', e.message); return []; }
 }
 
 /**
- * 【修复】清理历史壁纸，保留最近 keepCount 张
- * 
- * 修复内容：
- * 1. 使用修复后的 listByPrefix 获取完整文件列表
- * 2. 添加更详细的日志
+ * 清理历史壁纸，保留最近 keepCount 张
+ * @param {string} prefix  R2 前缀，如 "uploads/bg_admin_wallpaper_"
+ * @param {number} keepCount  保留数量，默认 5
  */
 async function cleanupOldWallpapers(prefix, keepCount = 5) {
-  if (!isR2Enabled()) {
-    console.log('[R2] R2 未启用，跳过壁纸清理');
-    return;
-  }
-  
+  if (!isR2Enabled()) return;
   try {
-    console.log(`[R2] 开始壁纸清理，前缀: ${prefix}, 保留数量: ${keepCount}`);
-    
     const items = await listByPrefix(prefix);
-    
-    if (items.length === 0) {
-      console.log(`[R2] 未找到匹配前缀 '${prefix}' 的文件`);
-      return;
-    }
-    
     if (items.length <= keepCount) {
       console.log(`[R2] 壁纸清理: 当前 ${items.length} 个文件，未超过上限 ${keepCount}，无需清理`);
       return;
     }
-    
     const toDelete = items.slice(keepCount);
     console.log(`[R2] 壁纸清理: 共 ${items.length} 个文件，保留最新 ${keepCount} 个，删除 ${toDelete.length} 个旧文件...`);
-    
-    // 打印要删除的文件列表
-    console.log(`[R2] 将删除的文件:`, toDelete.map(i => i.key).join(', '));
-    
     for (const obj of toDelete) {
       await deleteFromR2(obj.key);
     }
-    
     console.log(`[R2] 壁纸清理完成，已删除 ${toDelete.length} 个历史文件`);
   } catch(e) {
     console.error('[R2] 壁纸清理异常:', e.message);
-    console.error('[R2] 错误堆栈:', e.stack);
   }
 }
 

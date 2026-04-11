@@ -82,9 +82,7 @@ app.get('/api/background', (req, res) => {
   const cachePath = path.join(UPLOAD_DIR, fileName);
   if (fs.existsSync(cachePath)) return res.redirect(`/uploads/${fileName}`);
   const client = bgUrl.startsWith('https') ? https : http;
-  
-  // 【核心修复】：加入了 timeout: 10000 限制。碰到坏链接 10 秒掐断，不再死等。
-  client.get(bgUrl, { timeout: 10000 }, (response) => {
+  client.get(bgUrl, (response) => {
     if (response.statusCode === 200) {
       const file = fs.createWriteStream(cachePath);
       response.pipe(file);

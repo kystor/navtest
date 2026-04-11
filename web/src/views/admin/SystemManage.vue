@@ -27,6 +27,7 @@
 
       <button class="btn save-btn" @click="handleSave" :disabled="loading">{{ loading ? '保存中...' : '保存设置' }}</button>
 
+      <!-- 上传壁纸: 拖拽上传区域 -->
       <div class="upload-section">
         <label class="upload-label">上传壁纸</label>
         <div
@@ -39,12 +40,14 @@
         >
           <input type="file" ref="adminFileInput" @change="handleFileSelect" accept="image/*,video/*,video/quicktime,.mov,.m4v,.avi,.mkv" class="file-input-hidden" />
 
+          <!-- 默认状态 -->
           <div v-if="uploadState === 'idle'" class="drop-content">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5"><path d="M12 16V4m0 0l-4 4m4-4l4 4"/><path d="M4 20h16"/></svg>
             <span class="drop-main-text">点击选择或拖拽文件到此处</span>
             <span class="drop-sub-text">支持 MP4 / MOV / WebM / JPG / PNG / WebP / GIF</span>
           </div>
 
+          <!-- 上传中 -->
           <div v-if="uploadState === 'uploading'" class="drop-content">
             <div class="progress-ring">
               <svg viewBox="0 0 36 36" class="progress-svg">
@@ -56,12 +59,14 @@
             <span class="drop-main-text">正在上传{{ r2Status ? '并同步到 R2' : '' }}...</span>
           </div>
 
+          <!-- 成功 -->
           <div v-if="uploadState === 'success'" class="drop-content">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
             <span class="drop-main-text success-text">上传成功{{ uploadResult?.r2_synced ? ', R2 已同步' : '' }}</span>
             <span class="drop-sub-text">{{ uploadFileName }}</span>
           </div>
 
+          <!-- 失败 -->
           <div v-if="uploadState === 'error'" class="drop-content">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
             <span class="drop-main-text error-text">{{ uploadError }}</span>
@@ -71,36 +76,14 @@
         <p v-if="formatError" class="format-error">{{ formatError }}</p>
       </div>
 
+      <!-- 缓存网络资源 -->
       <details class="advanced-section">
         <summary>缓存网络资源到服务器</summary>
         <div class="advanced-body">
           <p class="hint">下载网络图片/视频到{{ r2Status ? ' R2' : '本地' }}。</p>
           <input v-model="cacheUrl" class="input" placeholder="输入网络链接" />
-          
-          <button class="cache-btn" @click="handleCache" :disabled="!cacheUrl.trim() || cacheState === 'uploading'">
-            {{ cacheState === 'uploading' ? '正在处理...' : '下载并缓存' }}
-          </button>
-
-          <div v-if="cacheState === 'uploading'" class="drop-content" style="margin-top: 20px; padding-bottom: 10px;">
-            <div class="progress-ring">
-              <svg viewBox="0 0 36 36" class="progress-svg">
-                <path class="progress-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                <path class="progress-fill" :stroke-dasharray="`${cacheProgress}, 100`" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-              </svg>
-              <span class="progress-text">{{ cacheProgress }}%</span>
-            </div>
-            <span class="drop-main-text">服务器正在下载并同步...</span>
-          </div>
-
-          <div v-if="cacheState === 'success'" class="status-text success" style="margin-top:10px; text-align:center; font-size: 0.9rem;">
-             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" style="vertical-align: middle; margin-right: 4px;"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
-             缓存成功{{ cacheResult?.r2_synced ? ', R2 已同步' : '' }}
-          </div>
-          
-          <div v-if="cacheState === 'error'" class="status-text error" style="margin-top:10px; text-align:center; color:#dc2626; font-size: 0.9rem;">
-             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" style="vertical-align: middle; margin-right: 4px;"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
-             {{ cacheErrorText }}
-          </div>
+          <button class="cache-btn" @click="handleCache" :disabled="!cacheUrl.trim()||caching">{{ caching ? '缓存中...' : '下载并缓存' }}</button>
+          <div v-if="cacheResult" class="status-text success">缓存成功{{ cacheResult.r2_synced ? ', R2 已同步' : '' }}</div>
         </div>
       </details>
 
@@ -115,11 +98,11 @@ import { getConfig, updateConfig } from '../../api';
 
 const siteTitle = ref(''); const bgUrl = ref(''); const bgType = ref('auto');
 const loading = ref(false); const message = ref(''); const messageType = ref('success');
-const cacheUrl = ref(''); 
+const cacheUrl = ref(''); const caching = ref(false); const cacheResult = ref(null);
 const r2Status = ref(null); const r2Domain = ref('');
 
-// 本地上传状态机
-const uploadState = ref('idle'); 
+// 上传状态机: idle -> uploading -> success/error
+const uploadState = ref('idle'); // idle | uploading | success | error
 const uploadProgress = ref(0);
 const uploadResult = ref(null);
 const uploadError = ref('');
@@ -127,17 +110,11 @@ const uploadFileName = ref('');
 const isDragOver = ref(false);
 const formatError = ref('');
 const adminFileInput = ref(null);
-let lastFile = null; 
-
-// 网络缓存下载状态机 (新增)
-const cacheState = ref('idle'); // idle | uploading | success | error
-const cacheProgress = ref(0);
-const cacheResult = ref(null);
-const cacheErrorText = ref('');
-let cacheInterval = null; // 用于控制平滑假进度
+let lastFile = null; // 用于重试
 
 const isR2Url = computed(() => r2Domain.value && bgUrl.value && bgUrl.value.startsWith(r2Domain.value));
 
+// 格式校验
 const ALLOWED_TYPES = /^(image\/(jpeg|png|gif|webp|bmp|svg\+xml)|video\/(mp4|webm|ogg|quicktime|x-m4v|x-msvideo|x-matroska))$/;
 const ALLOWED_EXTS = /\.(jpg|jpeg|png|gif|webp|bmp|svg|mp4|webm|ogg|mov|m4v|avi|mkv)$/i;
 
@@ -227,6 +204,7 @@ async function doUpload(file) {
       uploadState.value = 'success';
       message.value = '上传成功，壁纸已更新！请保存设置确认标题和类型。';
       messageType.value = 'success';
+      // 3秒后回到空闲状态
       setTimeout(() => { if (uploadState.value === 'success') uploadState.value = 'idle'; }, 3000);
     } else {
       throw new Error(result.error || '上传失败');
@@ -239,61 +217,20 @@ async function doUpload(file) {
   }
 }
 
-// 【优化核心】处理网络缓存下载请求
 async function handleCache() {
   if (!cacheUrl.value.trim()) return;
-  
-  // 初始化状态
-  cacheState.value = 'uploading';
-  cacheProgress.value = 0;
-  cacheResult.value = null;
-  cacheErrorText.value = '';
-  
-  // 模拟平滑进度条功能
-  // 因为后端的下载速度很快且难以直接反馈给前端，我们做一个顺滑的体验：
-  // 快速加载到 80%，然后慢慢等，一旦后端处理完直接变 100%。
-  if (cacheInterval) clearInterval(cacheInterval);
-  cacheInterval = setInterval(() => {
-    if (cacheProgress.value < 80) {
-      cacheProgress.value += Math.floor(Math.random() * 10) + 5; // 每次涨 5% ~ 15%
-    } else if (cacheProgress.value < 95) {
-      cacheProgress.value += 1; // 80% 后慢慢磨，防止进度条卡死带来焦虑
-    }
-  }, 400);
-
+  caching.value = true; cacheResult.value = null;
   try {
-    const resp = await fetch('/api/upload/fetch-and-cache', { 
-      method:'POST', 
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')}, 
-      body:JSON.stringify({url:cacheUrl.value}) 
-    });
+    const resp = await fetch('/api/upload/fetch-and-cache', { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')}, body:JSON.stringify({url:cacheUrl.value}) });
     const result = await resp.json();
-    
-    // 如果成功，瞬间填满进度条
     if (result.success) {
-      clearInterval(cacheInterval);
-      cacheProgress.value = 100;
-      
-      // 稍微延迟 300 毫秒，让用户肉眼能看清 100% 的圆环
-      setTimeout(() => {
-        bgUrl.value = result.url;
-        bgType.value = result.recommended_type || result.type || 'auto';
-        cacheResult.value = result;
-        cacheState.value = 'success';
-        message.value = '缓存成功，请保存设置'; 
-        messageType.value = 'success';
-      }, 300);
-
-    } else {
-      throw new Error(result.error);
-    }
-  } catch(e) { 
-    clearInterval(cacheInterval);
-    cacheState.value = 'error';
-    cacheErrorText.value = '缓存失败: ' + e.message;
-    message.value = cacheErrorText.value; 
-    messageType.value = 'error'; 
-  }
+      bgUrl.value = result.url;
+      bgType.value = result.recommended_type||result.type||'auto';
+      cacheResult.value = result;
+      message.value = '缓存成功，请保存设置'; messageType.value = 'success';
+    } else throw new Error(result.error);
+  } catch(e) { message.value = '缓存失败: '+e.message; messageType.value = 'error'; }
+  finally { caching.value = false; }
 }
 
 async function handleSave() {
@@ -345,7 +282,7 @@ async function handleSave() {
 .error-text { color: #dc2626; }
 .format-error { font-size: 12px; color: #dc2626; margin-top: 6px; padding: 6px 10px; background: #fef2f2; border-radius: 6px; }
 
-/* 进度环 (修改为兼容缓存区域使用) */
+/* 进度环 */
 .progress-ring { width: 48px; height: 48px; position: relative; }
 .progress-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
 .progress-bg { fill: none; stroke: #e5e7eb; stroke-width: 3; }
@@ -361,9 +298,9 @@ async function handleSave() {
 .advanced-section summary:hover { color: #2566d8; }
 .advanced-body { padding: 12px 14px 14px; border-top: 1px solid #f3f4f6; }
 .hint { font-size: 0.82rem; color: #888; margin-bottom: 8px; }
-.cache-btn { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #d0d7e2; background: #f8f9fa; color: #555; font-size: 13px; cursor: pointer; margin-top: 6px; transition: 0.2s; }
-.cache-btn:hover:not(:disabled) { background: #e2e8f0; } 
-.cache-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.cache-btn { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #d0d7e2; background: #f8f9fa; color: #555; font-size: 13px; cursor: pointer; margin-top: 6px; }
+.cache-btn:hover:not(:disabled) { background: #e2e8f0; } .cache-btn:disabled { opacity: 0.5; }
+.status-text { font-size: 0.82rem; margin-top: 6px; } .status-text.success { color: #059669; }
 .message { margin-top: 12px; padding: 10px; border-radius: 8px; font-size: 0.9rem; text-align: center; }
 .message.success { background: #d4edda; color: #155724; } .message.error { background: #f8d7da; color: #721c24; }
 @media (max-width: 768px) { .system-manage { width: 100%; padding: 0 4vw; } }
