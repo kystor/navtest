@@ -79,10 +79,10 @@
         </select>
       </div>
       <div class="add-row">
-        <input v-model="newCardTitle" placeholder="卡片标题 (留空可自动解析)" class="input narrow" />
-        <input v-model="newCardUrl" placeholder="卡片链接" class="input wide" @blur="autoParseNewCard" />
-        <input v-model="newCardLogo" placeholder="Logo链接 (留空可自动解析)" class="input medium" />
-        <button class="btn" @click="addCard" :disabled="isParsing">
+        <input v-model="newCardTitle" placeholder="卡片标题 (留空可自动解析)" class="input flex-input" />
+        <input v-model="newCardUrl" placeholder="卡片链接" class="input flex-input" @blur="autoParseNewCard" />
+        <input v-model="newCardLogo" placeholder="Logo链接 (留空可自动解析)" class="input flex-input" />
+        <button class="btn btn-add-fixed" @click="addCard" :disabled="isParsing">
           <svg v-if="!isParsing" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M12 5v14M5 12h14"/>
           </svg>
@@ -235,11 +235,11 @@
 </template>
 
 <script setup>
-// 保持原样不变的 JS 逻辑
 import { ref, onMounted, watch, computed } from 'vue';
 import draggable from 'vuedraggable';
 import { getMenus, getCards, addCard as apiAddCard, updateCard as apiUpdateCard, deleteCard as apiDeleteCard, updateCardOrder, searchCards, batchMoveCards, batchDeleteCards, parseLink } from '../../api';
 
+// Vue 数据状态定义
 const menus = ref([]);
 const cards = ref([]);
 const selectedMenuId = ref();
@@ -285,6 +285,7 @@ const isAllSelected = computed(() => {
   return displayCards.value.length > 0 && selectedCards.value.size === displayCards.value.length;
 });
 
+// 页面加载完成时请求数据
 onMounted(async () => {
   const res = await getMenus();
   menus.value = res.data;
@@ -413,13 +414,13 @@ async function handleBatchDelete() {
 </script>
 
 <style scoped>
-/* 省略了与原文件重复的基础部分，重点更新下方表格和拖拽类 CSS */
+/* 核心容器与头部 */
 .card-manage { max-width: 1200px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; align-items: center; }
 .card-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 16px; padding: 24px; margin-bottom: 20px; color: white; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); width: 100%; text-align: center; box-sizing: border-box; }
 .header-content { margin-bottom: 15px; text-align: center; }
 .page-title { font-size: 1.5rem; font-weight: 700; margin: 0 0 8px 0; letter-spacing: -0.5px; }
 
-/* 搜索栏、批量操作、筛选栏 CSS 保持一致... */
+/* 搜索栏样式 */
 .search-bar { display: flex; gap: 10px; justify-content: center; margin-bottom: 15px; width: 100%; max-width: 500px; margin-left: auto; margin-right: auto; }
 .search-input-wrapper { position: relative; flex: 1; min-width: 0; }
 .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #999; pointer-events: none; }
@@ -430,6 +431,8 @@ async function handleBatchDelete() {
 .search-btn { background: white; color: #667eea; flex-shrink: 0; white-space: nowrap; }
 .search-result-tip { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 0.9rem; color: rgba(255,255,255,0.9); }
 .clear-search-btn { background: none; border: none; color: white; text-decoration: underline; cursor: pointer; font-size: 0.85rem; }
+
+/* 批量操作样式 */
 .batch-operations { background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 12px; padding: 12px 20px; margin-bottom: 16px; width: 100%; display: flex; align-items: center; justify-content: space-between; box-sizing: border-box; }
 .batch-info { display: flex; align-items: center; gap: 8px; color: #4f46e5; font-size: 0.95rem; }
 .btn-cancel-select { background: none; border: 1px solid #4f46e5; color: #4f46e5; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; gap: 4px; transition: all 0.2s; }
@@ -437,29 +440,37 @@ async function handleBatchDelete() {
 .btn-move { background: #4f46e5; }
 .card-filter-add { background: white; border-radius: 12px; padding: 16px 20px; margin-bottom: 16px; width: 100%; box-shadow: 0 2px 8px rgba(0,0,0,0.06); box-sizing: border-box; }
 .filter-row { display: flex; gap: 10px; margin-bottom: 12px; }
-.add-row { display: flex; gap: 8px; flex-wrap: wrap; }
 
-/* 表格核心样式：更均匀的间距 */
+/* ====================================================
+   新增网址输入框排版 (已优化为弹性均分排版)
+   ==================================================== */
+.add-row { 
+  display: flex; 
+  gap: 12px; /* 输入框之间的距离 */
+  margin-bottom: 12px; 
+  align-items: center; /* 保证三个框和按钮在同一高度对齐 */
+  width: 100%; /* 占满整个父容器宽度 */
+}
+.flex-input {
+  flex: 1; /* 告诉浏览器，所有的框平均分配剩下的宽度空间 */
+  min-width: 0; /* 防止内容超出撑破布局，极其重要的小技巧 */
+}
+.btn-add-fixed {
+  flex-shrink: 0; /* 保护按钮不被压缩 */
+  white-space: nowrap; /* 保护按钮里的字不换行 */
+}
+/* ==================================================== */
+
+/* 表格主体样式 */
 .card-card { background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); overflow: hidden; width: 100%; box-sizing: border-box; }
 .card-table { width: 100%; border-collapse: collapse; }
 .card-table th, .card-table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #e5e7eb; vertical-align: middle; }
 .card-table th { background: #f9fafb; font-weight: 600; color: #374151; font-size: 0.85rem; }
 
-/* 拖拽体验优化：禁用选中 */
-.drag-handle { 
-  cursor: grab; 
-  text-align: center; 
-  color: #999;
-  user-select: none;
-  -webkit-user-select: none; 
-}
+/* 拖拽功能样式 */
+.drag-handle { cursor: grab; text-align: center; color: #999; user-select: none; -webkit-user-select: none; }
 .drag-handle:active { cursor: grabbing; }
-.ghost, .sortable-drag, .sortable-chosen { 
-  opacity: 0.5; 
-  background-color: #f3f4f6; 
-  user-select: none !important;
-  -webkit-user-select: none !important;
-}
+.ghost, .sortable-drag, .sortable-chosen { opacity: 0.5; background-color: #f3f4f6; user-select: none !important; -webkit-user-select: none !important; }
 
 .selected-row { background-color: #eef2ff !important; }
 .checkbox-cell { text-align: center; }
@@ -467,19 +478,19 @@ async function handleBatchDelete() {
 .card-title-cell { display: flex; align-items: center; gap: 8px; }
 .menu-tag { background: #f3f4f6; color: #6b7280; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; }
 
-/* 输入框统一排版 */
+/* 基础输入框样式 */
 .input { padding: 10px 12px; border-radius: 8px; border: 1px solid #d0d7e2; background: #fff; font-size: 0.9rem; box-sizing: border-box; transition: all 0.2s; }
-.input.narrow { width: 140px; }
-.input.medium { width: 140px; }
-.input.wide { flex: 1; min-width: 150px; }
+.input.narrow { width: 140px; } /* 这个留给筛选下拉菜单用 */
 .input:focus { outline: none; border-color: #399dff; box-shadow: 0 0 0 3px rgba(57, 157, 255, 0.1); }
 .table-input { width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid transparent; background: transparent; color: #222; font-size: 0.9rem; transition: all 0.2s ease; box-sizing: border-box; }
 .table-input:focus { outline: none; border-color: #399dff; background: white; box-shadow: 0 0 0 2px rgba(57, 157, 255, 0.1); }
 
+/* Logo预览样式 */
 .logo-cell { display: flex; align-items: center; gap: 8px; }
 .logo-preview { width: 28px; height: 28px; border-radius: 6px; object-fit: contain; background: #f3f4f6; border: 1px solid #e5e7eb; flex-shrink: 0; }
 .logo-input { flex: 1; min-width: 0; }
 
+/* 提示信息与按钮样式 */
 .parse-tip { font-size: 0.8rem; margin-top: 8px; padding: 6px 12px; border-radius: 6px; text-align: center; }
 .parse-tip.success { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
 .parse-tip.error { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
@@ -494,6 +505,8 @@ async function handleBatchDelete() {
 .btn-secondary { background: #e5e7eb; color: #374151; }
 .btn-primary { background: #4f46e5; }
 .empty-state { padding: 60px 20px; text-align: center; color: #9ca3af; }
+
+/* 弹出框样式 */
 .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 20px; }
 .modal { background: white; border-radius: 16px; width: 100%; max-width: 420px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3); }
 .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; border-bottom: 1px solid #e5e7eb; }

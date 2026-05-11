@@ -156,12 +156,65 @@ function onVideoLoadedData() {
 }
 function onVideoError() { videoFailed.value=true; isBgLoaded.value=true; }
 function onVideoEnded() { const v=bgVideoRef.value; if(v){v.currentTime=0; const p=v.play(); if(p&&p.catch)p.catch(()=>{videoFailed.value=true;});} }
-function attemptPlay() { const v=bgVideoRef.value; if(!v)return; v.muted=true; const p=v.play(); if(p&&p.catch)p.catch(err=>{if(err.name==='NotAllowedError')needsInteraction.value=true;else videoFailed.value=true;}); }
+
+// 👇 核心修复区域 1：优化 attemptPlay，增加对后台状态的判断
+function attemptPlay() { 
+  const v = bgVideoRef.value; 
+  if(!v) return; 
+
+  // 将视频强制静音，因为现代浏览器规定：只有静音的视频才允许自动播放
+  v.muted = true; 
+
+  // 【核心修复】：检查当前网页是否被切换到了后台
+  // 如果在后台，浏览器会拦截播放请求并报错。所以我们这里直接 return 退出，先不播放。
+  if (document.hidden) {
+    return;
+  }
+
+  // 尝试播放视频，并捕获可能会出现的报错
+  const p = v.play(); 
+  if(p && p.catch) {
+    p.catch(err => {
+      // NotAllowedError 意思是浏览器要求用户必须点一下屏幕才能放视频
+      if(err.name === 'NotAllowedError') {
+        needsInteraction.value = true;
+      } else {
+        // 【核心修复】：只有当网页真正在前台显示，却依然报错时，我们才断定是视频真的加载失败了
+        if (!document.hidden) {
+          videoFailed.value = true;
+        }
+      }
+    });
+  } 
+}
+
 function forcePlay() { const v=bgVideoRef.value; if(v){v.muted=true;v.play().then(()=>{needsInteraction.value=false;}).catch(()=>{videoFailed.value=true;});} needsInteraction.value=false; }
 
-if (typeof document!=='undefined') {
-  document.addEventListener('visibilitychange', ()=>{ const v=bgVideoRef.value; if(!v)return; if(document.hidden)v.pause(); else v.play().catch(()=>{}); });
+// 👇 核心修复区域 2：增强网页可见性切换时的恢复逻辑
+if (typeof document !== 'undefined') {
+  // 监听浏览器的 'visibilitychange' 事件，当你在不同标签页切来切去时会触发
+  document.addEventListener('visibilitychange', () => { 
+    const v = bgVideoRef.value; 
+    if(!v) return; 
+
+    // 如果网页被切到了后台（比如你去看了别的网页）
+    if(document.hidden) {
+      v.pause(); // 让视频暂停，节省资源
+    } 
+    // 如果网页切回了前台（你又回来看这个导航站了）
+    else { 
+      if (isVideoBg.value) {
+        // 取消由于在后台等待导致的“假失败”标记
+        videoFailed.value = false; 
+        // 重新调用安全播放函数
+        attemptPlay();
+      } else {
+        v.play().catch(()=>{}); 
+      }
+    } 
+  });
 }
+
 function setupTouchPlay() {
   const h=()=>{forcePlay();document.removeEventListener('touchstart',h);document.removeEventListener('click',h);};
   document.addEventListener('touchstart',h,{once:true,passive:true}); document.addEventListener('click',h,{once:true});
@@ -288,9 +341,7 @@ watch(searchQuery,(v)=>{
   if(selectedEngine.value.name==='site'){clearTimeout(searchTimer);searchTimer=setTimeout(async()=>{try{const r=await searchCards(v.trim());if(r.data.length>0){cards.value=r.data;activeMenu.value=null;activeSubMenu.value=null;}else cards.value=[];}catch{}},100);}
 });
 
-// 👇 核心修改区域：全新的 onMounted 生命周期 👇
 onMounted(async()=>{
-  // --- 1. 页面初次加载时拉取数据（原样保留） ---
   try {
     const c = await getConfig();
     if (c.data.background) globalBackground.value = c.data.background;
@@ -315,7 +366,6 @@ onMounted(async()=>{
   const friendRes = await getFriends();
   friendLinks.value = friendRes.data;
 
-  // --- 2. 新增：开启大喇叭监听，实现无感热重载 ---
   const eventSource = new EventSource('/api/stream');
   
   eventSource.onmessage = async (event) => {
@@ -324,31 +374,26 @@ onMounted(async()=>{
       console.log('✨ 收到云端数据更新指令，正在丝滑无感替换内容...');
       
       try {
-        // 第一阶段：无感更新全局壁纸和标题
         const c = await getConfig();
         if (c.data.background) globalBackground.value = c.data.background;
         if (c.data.bg_type) globalBgType.value = c.data.bg_type;
         if (c.data.title) document.title = c.data.title;
         
-        // 关键判定：如果访客没有使用自己的自定义壁纸，则让网页背景瞬间切换！
         if (localStorage.getItem('visitor_use_local_db') !== 'true' && !localStorage.getItem('visitor_bg')) {
           customBackground.value = globalBackground.value;
           customBgType.value = globalBgType.value;
         }
 
-        // 第二阶段：无感更新菜单和当前展示的卡片
         const newMenusRes = await getMenus();
         menus.value = newMenusRes.data;
         if (menus.value.length) {
-          // 如果当前所在的菜单被删除了，就跳回第一个菜单；否则留在原地
           if (!activeMenu.value || !menus.value.find(m => m.id === activeMenu.value.id)) {
             activeMenu.value = menus.value[0];
             activeSubMenu.value = null;
           }
-          loadCards(); // 重新向服务器请求最新卡片
+          loadCards(); 
         }
 
-        // 第三阶段：无感更新侧边广告和底部友情链接
         const newAdRes = await getAds();
         leftAds.value = newAdRes.data.filter(a => a.position === 'left');
         rightAds.value = newAdRes.data.filter(a => a.position === 'right');
@@ -362,7 +407,6 @@ onMounted(async()=>{
     }
   };
 });
-// 👆 核心修改区域结束 👆
 
 async function selectMenu(menu,parentMenu=null){if(parentMenu){activeMenu.value=parentMenu;activeSubMenu.value=menu;}else{activeMenu.value=menu;activeSubMenu.value=null;}loadCards();}
 async function loadCards(){if(!activeMenu.value)return;const r=await getCards(activeMenu.value.id,activeSubMenu.value?.id);cards.value=r.data;}
@@ -378,20 +422,13 @@ function handleLogoError(e){e.target.style.display='none';if(e.target.nextElemen
 .bg-image{position:fixed;inset:0;background-size:cover;background-position:center;background-repeat:no-repeat;z-index:0}
 .bg-video{position:fixed;top:0;left:0;width:100vw;height:100vh;height:100dvh;object-fit:cover;z-index:0;-webkit-transform:translateZ(0);transform:translateZ(0)}
 .home-container::before{content:'';position:fixed;inset:0;background:rgba(0,0,0,0.3);z-index:1}
-
-/* 【修复】考虑到手机端的汉堡按钮固定在顶部，我们给内容增加一点上内边距防遮挡 */
 .content-overlay{position:relative;z-index:2;flex:1;display:flex;flex-direction:column;padding-top:40px}
 @media(max-width:767px){.content-overlay{padding-top:60px}} 
-
 .tap-to-play-hint{position:fixed;bottom:120px;left:50%;transform:translateX(-50%);z-index:3;background:rgba(0,0,0,0.5);backdrop-filter:blur(8px);color:#fff;font-size:12px;padding:8px 16px;border-radius:20px;animation:pulse 2s ease-in-out infinite;cursor:pointer}
 @keyframes pulse{0%,100%{opacity:.8}50%{opacity:1}}
 .theme-toggle-btn{position:fixed;top:16px;right:16px;z-index:101;background:rgba(255,255,255,0.15);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.3);border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;transition:all .3s;box-shadow:0 4px 12px rgba(0,0,0,0.1)}
 .theme-toggle-btn:active{background:rgba(255,255,255,0.25);transform:scale(0.95)}
 @media(pointer:fine){.theme-toggle-btn:hover{background:rgba(255,255,255,0.25);transform:rotate(15deg) scale(1.1)}}
-
-/* ==============================================
-   【修改】Logo 的 CSS 定位：桌面端移至左上角
-   ============================================== */
 .home-logo {
   height: 48px; 
   margin-bottom: 16px;
@@ -412,7 +449,6 @@ function handleLogoError(e){e.target.style.display='none';if(e.target.nextElemen
     z-index: 100;
   }
 }
-
 .search-engine-select{display:flex;align-items:center;padding-bottom:.3rem;gap:3px;overflow-x:auto}
 .engine-btn{border:none;background:none;color:#fff;font-size:.8rem;padding:4px 10px;border-radius:4px;cursor:pointer;white-space:nowrap;min-height:32px}
 .engine-btn.active,.engine-btn:hover{color:#399dff;background:#ffffff1a}
