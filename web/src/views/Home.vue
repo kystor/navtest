@@ -5,7 +5,7 @@
     <img v-show="false" ref="bgImageRef" crossorigin="anonymous" />
     <div v-if="shouldShowImage" class="bg-image" :class="{ 'fade-in': isBgLoaded }" :style="customBackground ? { backgroundImage: `url('${customBackground}')` } : {}"></div>
     
-    <div v-if="needsInteraction && isBgLoaded" class="tap-to-play-hint" @click="forcePlay">轻触屏幕播放动态壁纸</div>
+    <!-- 已删除轻触屏幕提示 -->
 
     <div class="content-overlay">
       <button class="theme-toggle-btn" @click="showThemeSettings = true" title="自定义壁纸">
@@ -154,32 +154,46 @@ function onVideoLoadedData() {
   }
   setTimeout(() => { if(bgVideoRef.value) analyzeBrightness(bgVideoRef.value); }, 200);
 }
-function onVideoError() { videoFailed.value=true; isBgLoaded.value=true; }
+
+function onVideoError() {
+  const v = bgVideoRef.value;
+  if (!v || !customBackground.value) {
+    videoFailed.value = true;
+    return;
+  }
+  if (!v.dataset.retryCount) v.dataset.retryCount = 0;
+  if (parseInt(v.dataset.retryCount) > 3) {
+    videoFailed.value = true;
+    return;
+  }
+  v.dataset.retryCount = parseInt(v.dataset.retryCount) + 1;
+  
+  v.load();
+  setTimeout(() => {
+    if (!document.hidden && v) {
+      v.play().catch(() => {});
+    }
+  }, 500);
+}
+
 function onVideoEnded() { const v=bgVideoRef.value; if(v){v.currentTime=0; const p=v.play(); if(p&&p.catch)p.catch(()=>{videoFailed.value=true;});} }
 
-// 👇 核心修复区域 1：优化 attemptPlay，增加对后台状态的判断
 function attemptPlay() { 
   const v = bgVideoRef.value; 
   if(!v) return; 
 
-  // 将视频强制静音，因为现代浏览器规定：只有静音的视频才允许自动播放
   v.muted = true; 
 
-  // 【核心修复】：检查当前网页是否被切换到了后台
-  // 如果在后台，浏览器会拦截播放请求并报错。所以我们这里直接 return 退出，先不播放。
   if (document.hidden) {
     return;
   }
 
-  // 尝试播放视频，并捕获可能会出现的报错
   const p = v.play(); 
   if(p && p.catch) {
     p.catch(err => {
-      // NotAllowedError 意思是浏览器要求用户必须点一下屏幕才能放视频
       if(err.name === 'NotAllowedError') {
         needsInteraction.value = true;
       } else {
-        // 【核心修复】：只有当网页真正在前台显示，却依然报错时，我们才断定是视频真的加载失败了
         if (!document.hidden) {
           videoFailed.value = true;
         }
@@ -188,36 +202,41 @@ function attemptPlay() {
   } 
 }
 
-function forcePlay() { const v=bgVideoRef.value; if(v){v.muted=true;v.play().then(()=>{needsInteraction.value=false;}).catch(()=>{videoFailed.value=true;});} needsInteraction.value=false; }
+// 不再需要 forcePlay，已删除
 
-// 👇 核心修复区域 2：增强网页可见性切换时的恢复逻辑
 if (typeof document !== 'undefined') {
-  // 监听浏览器的 'visibilitychange' 事件，当你在不同标签页切来切去时会触发
   document.addEventListener('visibilitychange', () => { 
     const v = bgVideoRef.value; 
     if(!v) return; 
 
-    // 如果网页被切到了后台（比如你去看了别的网页）
     if(document.hidden) {
-      v.pause(); // 让视频暂停，节省资源
+      v.pause();
     } 
-    // 如果网页切回了前台（你又回来看这个导航站了）
     else { 
       if (isVideoBg.value) {
-        // 取消由于在后台等待导致的“假失败”标记
         videoFailed.value = false; 
-        // 重新调用安全播放函数
-        attemptPlay();
+        v.muted = true;
+        v.load();  // 强制重新加载，解决资源回收
+        const playPromise = v.play();
+        if (playPromise && playPromise.catch) {
+          playPromise.catch(err => {
+            if (err.name === 'NotAllowedError') {
+              needsInteraction.value = true;
+            } else {
+              setTimeout(() => {
+                if (v && !document.hidden) {
+                  v.load();
+                  v.play().catch(() => { videoFailed.value = true; });
+                }
+              }, 800);
+            }
+          });
+        }
       } else {
         v.play().catch(()=>{}); 
       }
     } 
   });
-}
-
-function setupTouchPlay() {
-  const h=()=>{forcePlay();document.removeEventListener('touchstart',h);document.removeEventListener('click',h);};
-  document.addEventListener('touchstart',h,{once:true,passive:true}); document.addEventListener('click',h,{once:true});
 }
 
 watch(customBackground, (newUrl) => {
@@ -350,7 +369,20 @@ onMounted(async()=>{
   } catch(e) {}
   
   await loadLocalWallpaper(); 
-  setupTouchPlay();
+  
+  // 利用任意一次用户交互激活自动播放
+  const activateOnce = () => {
+    const v = bgVideoRef.value;
+    if (v && isVideoBg.value) {
+      v.muted = true;
+      v.play().then(() => {
+        needsInteraction.value = false;
+      }).catch(() => {});
+    }
+  };
+  ['click', 'touchstart'].forEach(evt => 
+    document.addEventListener(evt, activateOnce, { once: true })
+  );
   
   const res = await getMenus();
   menus.value = res.data;
@@ -424,8 +456,6 @@ function handleLogoError(e){e.target.style.display='none';if(e.target.nextElemen
 .home-container::before{content:'';position:fixed;inset:0;background:rgba(0,0,0,0.3);z-index:1}
 .content-overlay{position:relative;z-index:2;flex:1;display:flex;flex-direction:column;padding-top:40px}
 @media(max-width:767px){.content-overlay{padding-top:60px}} 
-.tap-to-play-hint{position:fixed;bottom:120px;left:50%;transform:translateX(-50%);z-index:3;background:rgba(0,0,0,0.5);backdrop-filter:blur(8px);color:#fff;font-size:12px;padding:8px 16px;border-radius:20px;animation:pulse 2s ease-in-out infinite;cursor:pointer}
-@keyframes pulse{0%,100%{opacity:.8}50%{opacity:1}}
 .theme-toggle-btn{position:fixed;top:16px;right:16px;z-index:101;background:rgba(255,255,255,0.15);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.3);border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;transition:all .3s;box-shadow:0 4px 12px rgba(0,0,0,0.1)}
 .theme-toggle-btn:active{background:rgba(255,255,255,0.25);transform:scale(0.95)}
 @media(pointer:fine){.theme-toggle-btn:hover{background:rgba(255,255,255,0.25);transform:rotate(15deg) scale(1.1)}}
